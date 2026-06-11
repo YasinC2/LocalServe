@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Run local HTML/JS/CSS files offline as if hosted on a real web server">
+  <title>LocalServe</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="shortcut icon" href="icons/icon-72.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+  <div id="app">
+
+    <!-- ========== TOP BAR ========== -->
+    <header id="topBar">
+      <span id="barTitle" class="bar-title">No file loaded</span>
+      <div class="">
+        <button id="btnOpenFolder" class="btn btn-sm" title="Open Folder">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-folder">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>Open</span>
+        </button>
+        <button id="btnAddFavorite" class="btn btn-icon btn-ghost" title="Add to Favorites">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-heart">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ========== TAB CONTENT ========== -->
+    <main id="tabContent">
+
+      <!-- ---- Player Tab ---- -->
+      <section id="playerTab" class="tab-pane active">
+        <div id="playerEmpty" class="player-empty">
+          <div class="empty-icon">
+            <img src="icons/icon.svg" width="100px">
+            <!-- <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-folder">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg> -->
+          </div>
+          <h2>Welcome to LocalServe</h2>
+          <p>Select a local folder containing HTML files to view them as if they were hosted on a web server.</p>
+          <button id="btnOpenFolderEmpty" class="btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-folder">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Open Folder
+          </button>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+            Requires a Chromium-based browser with<br>File System Access API support.
+          </p>
+        </div>
+        <iframe id="contentFrame" style="display: none;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads" title="Content Frame"></iframe>
+      </section>
+
+      <!-- ---- File Explorer Tab ---- -->
+      <section id="explorerTab" class="tab-pane">
+        <div id="explorerBreadcrumb" class="explorer-breadcrumb">
+          <span class="breadcrumb-item current">No folder selected</span>
+        </div>
+        <div id="explorerFileList" class="file-list"></div>
+        <div id="explorerEmpty" class="explorer-empty" style="display: none;">
+          <span class="empty-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-folder">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </span>
+          <p>No folder selected.<br>Tap "Open" in the top bar to choose a folder.</p>
+        </div>
+
+        <!-- Favorites Section -->
+        <div id="favoritesSection" class="favorites-section">
+          <div class="favorites-header">
+            <span class="flex-align">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-star">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              Favorites
+            </span>
+          </div>
+          <div id="favoritesList"></div>
+        </div>
+      </section>
+
+      <!-- ---- History Tab ---- -->
+      <section id="historyTab" class="tab-pane">
+        <div class="history-header">
+          <h3 class="flex-align">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            History
+          </h3>
+          <button id="btnClearHistory" class="btn btn-sm btn-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+            Clear
+          </button>
+        </div>
+        <div id="historyList" class="history-list"></div>
+        <div id="historyEmpty" class="history-empty" style="display: none;">
+          <span class="empty-icon">📜</span>
+          <p>No history yet.<br>Files you open will appear here.</p>
+        </div>
+      </section>
+
+      <!-- ---- Settings Tab ---- -->
+      <section id="settingsTab" class="tab-pane">
+
+        <!-- Appearance -->
+        <div class="settings-group">
+          <div class="settings-group-title">Appearance</div>
+          <div class="setting-row">
+            <div class="setting-label">
+              <span class="flex-align">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+                Dark Mode
+              </span>
+              <span class="setting-desc">Toggle between light and dark themes</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="themeToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Player -->
+        <div class="settings-group">
+          <div class="settings-group-title">Player</div>
+          <div class="setting-row">
+            <div class="setting-label">
+              <span class="flex-align">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-zap">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                JavaScript in Pages
+              </span>
+              <span class="setting-desc">Enable/disable JS execution in loaded pages</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="jsToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">
+              <span class="flex-align">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Auto-hide Bars
+              </span>
+              <span class="setting-desc">Hide top & bottom bars in Player tab</span>
+            </div>
+            <select id="autoHideSelect" class="setting-select">
+              <option value="disabled">Disabled</option>
+              <option value="single">Single Click</option>
+              <option value="double">Double Click</option>
+              <option value="triple">Triple Click</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- About -->
+        <div class="settings-group">
+          <div class="settings-group-title">About</div>
+          <div class="setting-row">
+            <div class="setting-label">
+              <span class="flex-align">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-help-circle">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                Help
+              </span>
+              <span class="setting-desc">How to use LocalServe</span>
+            </div>
+            <button id="btnHelp" class="btn btn-sm btn-outline">Open</button>
+          </div>
+          <div class="setting-row" style="flex-direction: column; align-items: stretch; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="setting-label">
+                <span class="flex-align">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-refresh-ccw">
+                    <polyline points="1 4 1 10 7 10"></polyline>
+                    <polyline points="23 20 23 14 17 14"></polyline>
+                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                  </svg>
+                  Updates
+                </span>
+                <span class="setting-desc" id="updateStatus">Tap to check for updates</span>
+              </div>
+              <button id="btnCheckUpdate" class="btn btn-sm btn-outline">Check</button>
+            </div>
+            <div id="updateBanner" class="update-banner">
+              <span class="flex-align">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-smile">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                  <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                  <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                </svg>
+                New version available!
+              </span>
+              <button id="btnDoUpdate" class="btn btn-sm">Update Now</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- App Info -->
+        <div class="app-info">
+          <div class="app-name">LocalServe</div>
+          <div class="app-version">v1.0.0</div>
+          <div style="margin-top: 4px;">Offline Local Web Server PWA</div>
+          <div class="flex-align" style="margin-top: 2px; font-size: 12px;justify-content: center;">
+            Built with
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="red" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-heart">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            using Vanilla JS
+          </div>
+          <a href="https://github.com/YasinC2/LocalServe" target="_blank" class="btn btn-sm btn-outline github-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-github" viewBox="0 0 16 16">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"></path>
+            </svg>
+            GitHub
+          </a>
+        </div>
+
+      </section>
+    </main>
+
+    <!-- ========== BOTTOM TAB BAR ========== -->
+    <nav id="bottomBar">
+      <button class="tab-btn active" data-tab="player">
+        <span class="tab-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-globe">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+        </span>
+        <span>Player</span>
+      </button>
+      <button class="tab-btn" data-tab="explorer">
+        <span class="tab-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-folder">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </span>
+        <span>Files</span>
+      </button>
+      <button class="tab-btn" data-tab="history">
+        <span class="tab-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </span>
+        <span>History</span>
+      </button>
+      <button class="tab-btn" data-tab="settings">
+        <span class="tab-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-settings">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </span>
+        <span>Settings</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ========== HELP MODAL ========== -->
+  <div id="helpModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>📖 How to Use LocalServe</h3>
+        <button class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <h4>Getting Started</h4>
+        <ul>
+          <li>Tap <strong>"📂 Open"</strong> to select a local folder containing your web project files.</li>
+          <li>The app will automatically find and load <code>index.html</code> or <code>default.html</code>.</li>
+          <li>All relative and absolute paths within your HTML files will resolve correctly.</li>
+        </ul>
+
+        <h4>File Explorer</h4>
+        <ul>
+          <li>Browse all files and folders inside your project.</li>
+          <li>Tap any HTML file to load it in the Player.</li>
+          <li>Navigate using the breadcrumb trail at the top.</li>
+        </ul>
+
+        <h4>Favorites</h4>
+        <ul>
+          <li>Tap the
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="red" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-heart">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            button to save the current folder as a favorite.
+          </li>
+          <li>Access favorites from the File Explorer tab.</li>
+          <li>Quickly switch between different projects.</li>
+        </ul>
+
+        <h4>Auto-hide Bars</h4>
+        <ul>
+          <li>In Settings, enable auto-hide to get a full-screen view in the Player tab.</li>
+          <li>Choose single, double, or triple click to toggle the bars.</li>
+          <li>You can also reveal bars by touching near the top or bottom edge of the screen.</li>
+        </ul>
+
+        <h4>JavaScript Toggle</h4>
+        <ul>
+          <li>Disable JavaScript in Settings to sandbox loaded pages without script execution.</li>
+          <li>Useful for previewing static content safely.</li>
+        </ul>
+
+        <h4>Offline Use</h4>
+        <ul>
+          <li>This app works fully offline once installed.</li>
+          <li>On Android, use Chrome's "Install app" or "Add to Home Screen" option.</li>
+          <li>The previously opened folder will be restored on next launch (permission required).</li>
+        </ul>
+
+        <h4>Requirements</h4>
+        <ul>
+          <li>Chromium-based browser (Chrome 86+, Edge 86+).</li>
+          <li>File System Access API support.</li>
+          <li>For Android: Chrome 86+ with the API flag enabled, or newer versions with native support.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast" class="toast"></div>
+
+  <!-- App Script -->
+  <script src="/app.js"></script>
+
+</body>
+
+</html>
